@@ -1,62 +1,102 @@
-from conans import ConanFile, CMake, tools
+from conans import ConanFile, Meson, tools
+from conans.errors import ConanInvalidConfiguration
 import os
+import shutil
 
 
-class LibnameConan(ConanFile):
-    name = "libname"
-    description = "Keep it short"
-    topics = ("conan", "libname", "logging")
-    url = "https://github.com/bincrafters/conan-libname"
-    homepage = "https://github.com/original_author/original_lib"
-    license = "MIT"  # Indicates license type of the packaged library; please use SPDX Identifiers https://spdx.org/licenses/
-    # Remove following lines if the target lib does not use CMake
-    exports_sources = ["CMakeLists.txt"]
-    generators = "cmake"
+class EpoxyConan(ConanFile):
+    name = "libepoxy"
+    description = "libepoxy is a library for handling OpenGL function pointer management"
+    topics = ("conan", "libepoxy", "opengl")
+    url = "https://github.com/bincrafters/conan-libepoxy"
+    homepage = "https://github.com/anholt/libepoxy"
+    license = "MIT"
+    generators = "pkg_config"
 
     # Options may need to change depending on the packaged library
     settings = "os", "arch", "compiler", "build_type"
-    options = {"shared": [True, False], "fPIC": [True, False]}
-    default_options = {"shared": False, "fPIC": True}
+    options = {
+        "shared": [True, False],
+        "fPIC": [True, False],
+        "glx": [True, False],
+        "egl": [True, False],
+        "x11": [True, False]
+    }
+    default_options = {
+        "shared": False,
+        "fPIC": True,
+        "glx": True,
+        "egl": True,
+        "x11": True
+        }
 
     _source_subfolder = "source_subfolder"
     _build_subfolder = "build_subfolder"
 
-    requires = (
-        "zlib/1.2.11"
-    )
+    def configure(self):
+        del self.settings.compiler.libcxx
+        del self.settings.compiler.cppstd
+        if self.settings.os == 'Windows' and not self.options.shared:
+            raise ConanInvalidConfiguration('only shared library is supported on windows')
 
     def config_options(self):
         if self.settings.os == 'Windows':
             del self.options.fPIC
+        if self.settings.os != 'Linux':
+            del self.options.glx
+            del self.options.egl
+            del self.options.x11
+
+    def build_requirements(self):
+        self.build_requires('meson/0.53.0')
+
+    def requirements(self):
+        if self.settings.os == 'Linux':
+            self.requires('mesa/19.3.1@bincrafters/stable')
+            if self.options.x11:
+                self.requires('libx11/1.6.8@bincrafters/stable')
 
     def source(self):
         tools.get(**self.conan_data["sources"][self.version])
         extracted_dir = self.name + "-" + self.version
         os.rename(extracted_dir, self._source_subfolder)
 
-    def _configure_cmake(self):
-        cmake = CMake(self)
-        cmake.definitions["BUILD_TESTS"] = False  # example
-        cmake.configure(build_folder=self._build_subfolder)
-        return cmake
+    def _configure_meson(self):
+        meson = Meson(self)
+        defs = {}
+        defs['docs'] = 'false'
+        defs['tests'] = 'false'
+        for opt in ['glx', 'egl']:
+            defs[opt] = 'yes' if self.settings.os == 'Linux' and getattr(self.options, opt) else 'no'
+        for opt in ['x11']:
+            defs[opt] = 'true' if self.settings.os == 'Linux' and getattr(self.options, opt) else 'false'
+        args=[]
+        args.append('--wrap-mode=nofallback')
+        meson.configure(defs=defs, build_folder=self._build_subfolder, source_folder=self._source_subfolder, pkg_config_paths=[self.install_folder], args=args)
+        return meson
 
     def build(self):
-        cmake = self._configure_cmake()
-        cmake.build()
+        for package in self.deps_cpp_info.deps:
+            lib_path = self.deps_cpp_info[package].rootpath
+            for dirpath, _, filenames in os.walk(lib_path):
+                for filename in filenames:
+                    if filename.endswith('.pc'):
+                        if filename in ["cairo.pc", "fontconfig.pc", "xext.pc", "xi.pc", "x11.pc", "xcb.pc"]:
+                            continue
+                        shutil.copyfile(os.path.join(dirpath, filename), filename)
+                        tools.replace_prefix_in_pc_file(filename, lib_path)
+        with tools.environment_append(tools.RunEnvironment(self).vars):
+            meson = self._configure_meson()
+            meson.build()
 
     def package(self):
         self.copy(pattern="LICENSE", dst="licenses", src=self._source_subfolder)
-        cmake = self._configure_cmake()
-        cmake.install()
-        # If the CMakeLists.txt has a proper install method, the steps below may be redundant
-        # If so, you can just remove the lines below
-        include_folder = os.path.join(self._source_subfolder, "include")
-        self.copy(pattern="*", dst="include", src=include_folder)
-        self.copy(pattern="*.dll", dst="bin", keep_path=False)
-        self.copy(pattern="*.lib", dst="lib", keep_path=False)
-        self.copy(pattern="*.a", dst="lib", keep_path=False)
-        self.copy(pattern="*.so*", dst="lib", keep_path=False)
-        self.copy(pattern="*.dylib", dst="lib", keep_path=False)
+        meson = self._configure_meson()
+        meson.install()
+        tools.rmdir(os.path.join(self.package_folder, 'lib', 'pkgconfig'))
 
     def package_info(self):
-        self.cpp_info.libs = tools.collect_libs(self)
+        self.cpp_info.libs = ['epoxy']
+        if self.settings.os == 'Linux':
+            self.cpp_info.system_libs = ['dl']
+        self.cpp_info.names['pkg_config'] = 'epoxy'

@@ -1,8 +1,8 @@
 ## Package Status
 
-| Bintray | Windows | Linux & macOS |
-|:--------:|:---------:|:-----------------:|
-|[![Download](https://api.bintray.com/packages/bincrafters/public-conan/package_name%3Abincrafters/images/download.svg) ](https://bintray.com/bincrafters/public-conan/package_name%3Abincrafters/_latestVersion)|[![Build status](https://ci.appveyor.com/api/projects/status/github/bincrafters/conan-package_name?svg=true)](https://ci.appveyor.com/project/bincrafters/conan-package_name)|[![Build Status](https://travis-ci.com/bincrafters/conan-package_name.svg)](https://travis-ci.com/bincrafters/conan-package_name)|
+| Bintray | Windows | Linux | macOS |
+|:--------:|:---------:|:---------:|:---------:|
+|[![Download](https://api.bintray.com/packages/bincrafters/public-conan/libepoxy%3Abincrafters/images/download.svg) ](https://bintray.com/bincrafters/public-conan/libepoxy%3Abincrafters/_latestVersion)|[![Build status](https://ci.appveyor.com/api/projects/status/github/bincrafters/conan-libepoxy?svg=true)](https://ci.appveyor.com/project/bincrafters/conan-libepoxy)|[![Build Status](https://github.com/bincrafters/conan-libepoxy/workflows/.github/workflows/conan.yml/badge.svg)](https://github.com/bincrafters/conan-libepoxy/actions)|[![Build Status](https://travis-ci.com/bincrafters/conan-libepoxy.svg)](https://travis-ci.com/bincrafters/conan-libepoxy)|
 
 ## Conan Information
 
