@@ -12,7 +12,6 @@ class EpoxyConan(ConanFile):
     license = "MIT"
     generators = "pkg_config"
 
-    # Options may need to change depending on the packaged library
     settings = "os", "arch", "compiler", "build_type"
     options = {
         "shared": [True, False],
@@ -27,7 +26,7 @@ class EpoxyConan(ConanFile):
         "glx": True,
         "egl": True,
         "x11": True
-        }
+    }
 
     _source_subfolder = "source_subfolder"
     _build_subfolder = "build_subfolder"
@@ -39,21 +38,21 @@ class EpoxyConan(ConanFile):
             self.options.shared = True
 
     def config_options(self):
-        if self.settings.os == 'Windows':
+        if self.settings.os == "Windows":
             del self.options.fPIC
-        if self.settings.os != 'Linux':
+        if self.settings.os != "Linux":
             del self.options.glx
             del self.options.egl
             del self.options.x11
 
     def build_requirements(self):
-        self.build_requires('meson/0.53.0')
+        self.build_requires("meson/0.53.0")
 
     def requirements(self):
-        if self.settings.os == 'Linux':
-            self.requires('mesa/19.3.1@bincrafters/stable')
+        if self.settings.os == "Linux":
+            self.requires("mesa/19.3.1@bincrafters/stable")
             if self.options.x11:
-                self.requires('libx11/1.6.8@bincrafters/stable')
+                self.requires("libx11/1.6.8@bincrafters/stable")
 
     def source(self):
         tools.get(**self.conan_data["sources"][self.version])
@@ -63,14 +62,14 @@ class EpoxyConan(ConanFile):
     def _configure_meson(self):
         meson = Meson(self)
         defs = {}
-        defs['docs'] = 'false'
-        defs['tests'] = 'false'
-        for opt in ['glx', 'egl']:
-            defs[opt] = 'yes' if self.settings.os == 'Linux' and getattr(self.options, opt) else 'no'
-        for opt in ['x11']:
-            defs[opt] = 'true' if self.settings.os == 'Linux' and getattr(self.options, opt) else 'false'
+        defs["docs"] = "false"
+        defs["tests"] = "false"
+        for opt in ["glx", "egl"]:
+            defs[opt] = "yes" if self.settings.os == "Linux" and getattr(self.options, opt) else "no"
+        for opt in ["x11"]:
+            defs[opt] = "true" if self.settings.os == "Linux" and getattr(self.options, opt) else "false"
         args=[]
-        args.append('--wrap-mode=nofallback')
+        args.append("--wrap-mode=nofallback")
         meson.configure(defs=defs, build_folder=self._build_subfolder, source_folder=self._source_subfolder, pkg_config_paths=[self.install_folder], args=args)
         return meson
 
@@ -79,7 +78,7 @@ class EpoxyConan(ConanFile):
             lib_path = self.deps_cpp_info[package].rootpath
             for dirpath, _, filenames in os.walk(lib_path):
                 for filename in filenames:
-                    if filename.endswith('.pc'):
+                    if filename.endswith(".pc"):
                         if filename in ["cairo.pc", "fontconfig.pc", "xext.pc", "xi.pc", "x11.pc", "xcb.pc"]:
                             continue
                         shutil.copyfile(os.path.join(dirpath, filename), filename)
@@ -92,10 +91,10 @@ class EpoxyConan(ConanFile):
         self.copy(pattern="LICENSE", dst="licenses", src=self._source_subfolder)
         meson = self._configure_meson()
         meson.install()
-        tools.rmdir(os.path.join(self.package_folder, 'lib', 'pkgconfig'))
+        tools.rmdir(os.path.join(self.package_folder, "lib", "pkgconfig"))
 
     def package_info(self):
-        self.cpp_info.libs = ['epoxy']
-        if self.settings.os == 'Linux':
-            self.cpp_info.system_libs = ['dl']
-        self.cpp_info.names['pkg_config'] = 'epoxy'
+        self.cpp_info.libs = ["epoxy"]
+        if self.settings.os == "Linux":
+            self.cpp_info.system_libs = ["dl"]
+        self.cpp_info.names["pkg_config"] = "epoxy"
