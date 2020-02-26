@@ -1,5 +1,4 @@
 from conans import ConanFile, Meson, tools
-from conans.errors import ConanInvalidConfiguration
 import os
 import shutil
 
@@ -36,8 +35,8 @@ class EpoxyConan(ConanFile):
     def configure(self):
         del self.settings.compiler.libcxx
         del self.settings.compiler.cppstd
-        if self.settings.os == 'Windows' and not self.options.shared:
-            raise ConanInvalidConfiguration('only shared library is supported on windows')
+        if self.settings.os == "Windows":
+            self.options.shared = True
 
     def config_options(self):
         if self.settings.os == 'Windows':
