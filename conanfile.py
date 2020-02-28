@@ -21,7 +21,7 @@ class EpoxyConan(ConanFile):
         "x11": [True, False]
     }
     default_options = {
-        "shared": False,
+        "shared": True,
         "fPIC": True,
         "glx": True,
         "egl": True,
