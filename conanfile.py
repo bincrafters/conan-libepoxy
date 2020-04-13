@@ -24,7 +24,7 @@ class EpoxyConan(ConanFile):
         "shared": True,
         "fPIC": True,
         "glx": True,
-        "egl": True,
+        "egl": False,
         "x11": True
     }
 
