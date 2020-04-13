@@ -49,8 +49,8 @@ class EpoxyConan(ConanFile):
         self.build_requires("meson/0.53.2")
 
     def requirements(self):
+        self.requires("opengl/virtual@bincrafters/stable")
         if self.settings.os == "Linux":
-            self.requires("mesa/19.3.1@bincrafters/stable")
             if self.options.x11:
                 self.requires("libx11/1.6.8@bincrafters/stable")
 
